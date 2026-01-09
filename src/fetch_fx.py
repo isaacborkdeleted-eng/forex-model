@@ -20,6 +20,7 @@ data = r.json()
 if "rates" not in data:
     raise RuntimeError(f"FX API failed: {data}")
 
+
 rows = []
 for date, rates in data["rates"].items():
     if QUOTE in rates:
