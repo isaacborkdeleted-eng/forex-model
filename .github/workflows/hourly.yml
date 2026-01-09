@@ -18,6 +18,8 @@ jobs:
       - run: pip install requests pandas numpy
 
       - run: |
+        pwd
+          ls -R
           python src/fetch_fx.py
           python src/fetch_weather.py
           python src/indicators.py
