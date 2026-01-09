@@ -1,3 +1,4 @@
+print("=== USING FRANKFURTER FX FETCHER ===")
 import requests
 import pandas as pd
 import os
