@@ -5,7 +5,7 @@ df = pd.read_csv("data/fx_prices.csv", parse_dates=["time"])
 df.sort_values("time", inplace=True)
 
 current_price = df.iloc[-1]["price"]
-price_2h = df.iloc[-3]["price"]
+price_2h = df.iloc[-2]["price"] if len(df) > 2 else df.iloc[-1]["price"]
 
 year_ago = df[df["time"] >= df["time"].max() - pd.Timedelta(days=365)]
 two_months = df[df["time"] >= df["time"].max() - pd.Timedelta(days=60)]
