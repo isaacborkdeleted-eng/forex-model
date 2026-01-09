@@ -1,44 +1,33 @@
 import requests
 import pandas as pd
 import os
-import json
-import sys
+from datetime import datetime, timedelta
 
-API_KEY = "HPDY217FM61W6DOD"
-PAIR_FROM = "USD"
-PAIR_TO = "PLN"
+BASE = "USD"
+QUOTE = "PLN"
 
-URL = (
-    "https://www.alphavantage.co/query"
-    "?function=FX_INTRADAY"
-    "&from_symbol={}"
-    "&to_symbol={}"
-    "&interval=60min"
-    "&outputsize=full"
-    "&apikey={}"
-).format(PAIR_FROM, PAIR_TO, API_KEY)
+end = datetime.utcnow().date()
+start = end - timedelta(days=365)
 
-r = requests.get(URL, timeout=30)
+url = (
+    "https://api.exchangerate.host/timeseries"
+    f"?start_date={start}"
+    f"&end_date={end}"
+    f"&base={BASE}"
+    f"&symbols={QUOTE}"
+)
+
+r = requests.get(url, timeout=30)
 data = r.json()
 
-# Handle rate limits or API errors gracefully
-if "Time Series FX (60min)" not in data:
-    print("Alpha Vantage did not return FX data.")
-    print("Full response:")
-    print(json.dumps(data, indent=2))
-
-    # If we already have data, reuse it
-    if os.path.exists("data/fx_prices.csv"):
-        print("Using existing FX data.")
-        sys.exit(0)
-    else:
-        raise RuntimeError("No FX data available and no cached file.")
+if not data.get("success"):
+    raise RuntimeError("FX API failed")
 
 rows = []
-for t, v in data["Time Series FX (60min)"].items():
+for date, rates in data["rates"].items():
     rows.append({
-        "time": t,
-        "price": float(v["4. close"])
+        "time": date,
+        "price": rates[QUOTE]
     })
 
 df = pd.DataFrame(rows)
@@ -48,4 +37,5 @@ df.sort_values("time", inplace=True)
 os.makedirs("data", exist_ok=True)
 df.to_csv("data/fx_prices.csv", index=False)
 
-print(f"Saved {len(df)} FX price rows")
+print(f"Saved {len(df)} daily FX rows")
+
