@@ -1,6 +1,8 @@
 import requests
 import pandas as pd
 import os
+import json
+import sys
 
 API_KEY = "HPDY217FM61W6DOD"
 PAIR_FROM = "USD"
@@ -16,11 +18,21 @@ URL = (
     "&apikey={}"
 ).format(PAIR_FROM, PAIR_TO, API_KEY)
 
-r = requests.get(URL)
+r = requests.get(URL, timeout=30)
 data = r.json()
 
+# Handle rate limits or API errors gracefully
 if "Time Series FX (60min)" not in data:
-    raise RuntimeError("FX data not returned")
+    print("Alpha Vantage did not return FX data.")
+    print("Full response:")
+    print(json.dumps(data, indent=2))
+
+    # If we already have data, reuse it
+    if os.path.exists("data/fx_prices.csv"):
+        print("Using existing FX data.")
+        sys.exit(0)
+    else:
+        raise RuntimeError("No FX data available and no cached file.")
 
 rows = []
 for t, v in data["Time Series FX (60min)"].items():
@@ -36,5 +48,4 @@ df.sort_values("time", inplace=True)
 os.makedirs("data", exist_ok=True)
 df.to_csv("data/fx_prices.csv", index=False)
 
-print("FX prices saved")
-
+print(f"Saved {len(df)} FX price rows")
